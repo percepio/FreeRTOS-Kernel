@@ -1,5 +1,5 @@
 /*
- * FreeRTOS Kernel V10.4.1
+ * FreeRTOS Kernel V10.4.2
  * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -518,6 +518,10 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
     size_t xRequiredSpace = xDataLengthBytes;
     TimeOut_t xTimeOut;
 
+    /* The maximum amount of space a stream buffer will ever report is its length
+     * minus 1. */
+    const size_t xMaxReportedSpace = pxStreamBuffer->xLength - ( size_t ) 1;
+
     configASSERT( pvTxData );
     configASSERT( pxStreamBuffer );
 
@@ -534,7 +538,7 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
 
         /* If this is a message buffer then it must be possible to write the
          * whole message. */
-        if( xRequiredSpace > pxStreamBuffer->xLength )
+        if( xRequiredSpace > xMaxReportedSpace )
         {
             /* The message would not fit even if the entire buffer was empty,
              * so don't wait for space. */
@@ -550,9 +554,9 @@ size_t xStreamBufferSend( StreamBufferHandle_t xStreamBuffer,
         /* If this is a stream buffer then it is acceptable to write only part
          * of the message to the buffer.  Cap the length to the total length of
          * the buffer. */
-        if( xRequiredSpace > pxStreamBuffer->xLength )
+        if( xRequiredSpace > xMaxReportedSpace )
         {
-            xRequiredSpace = pxStreamBuffer->xLength;
+            xRequiredSpace = xMaxReportedSpace;
         }
         else
         {
